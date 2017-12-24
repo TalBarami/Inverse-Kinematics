@@ -70,31 +70,47 @@ int main(int argc, char** argv)
     Mesh mesh(vertices, sizeof(vertices)/sizeof(vertices[0]), indices, sizeof(indices)/sizeof(indices[0]));
 	Shader shader("./res/shaders/basicShader");
 
-	auto pos = vec3(0,0,-5);
+	auto pos = vec3(0,0,-15);
 	auto forward = glm::vec3(0.0f, 0.0f, 1.0f);
 	auto up = glm::vec3(0.0f, 1.0f, 0.0f);
-	auto P = glm::perspective(60.0f, float(DISPLAY_WIDTH)/float(DISPLAY_HEIGHT), 0.1f, 100.0f);
-	auto M = glm::mat4(1);
+	auto P = glm::perspective(60.0f, float(DISPLAY_WIDTH) / float(DISPLAY_HEIGHT), 0.1f, 100.0f);
 	P = P * glm::lookAt(pos, pos + forward, up);
-	auto MVP = P*M;
-	glfwSetKeyCallback(display.m_window,key_callback);
+	mat4 M, MVP;
 
+	auto cube = mat4(1);
+	mat4 chains[] = {
+		mat4(1),
+		mat4(1),
+		mat4(1),
+		mat4(1)
+	};
+
+	glfwSetKeyCallback(display.m_window,key_callback);
 
 	while(!glfwWindowShouldClose(display.m_window))
 	{
 		Sleep(3);
-		M = glm::rotate(M,0.1f,up);
-		MVP = P*M;
 		display.Clear(1.0f, 1.0f, 1.0f, 1.0f);
-
 		shader.Bind();
-		shader.Update(MVP,M);
 
+		M = glm::translate(vec3(5, 0, 0));
+		M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
+		MVP = P*M;
+		shader.Update(MVP,M);
 		mesh.Draw();
+
+		for (auto i = 0; i < 4; i++)
+		{
+			M = glm::translate(mat4(1), vec3(0, 0, SCALE_FACTOR.z) * float(i) * float(CUBE_SIZE) * DELTA);
+			M = glm::scale(M, SCALE_FACTOR);
+			M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
+			MVP = P*M;
+			shader.Update(MVP, M);
+			mesh.Draw();
+		}
 
 
 		display.SwapBuffers();
-
 		glfwPollEvents();
 	}
 
