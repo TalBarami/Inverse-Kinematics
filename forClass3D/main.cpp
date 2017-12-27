@@ -4,88 +4,40 @@
 #include "mesh.h"
 #include "shader.h"
 #include "inputManager.h"
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
 
 using namespace glm;
 
-static const int DISPLAY_WIDTH = 800;
-static const int DISPLAY_HEIGHT = 800;
 
 int main(int argc, char** argv)
 {
-	Display display(DISPLAY_WIDTH, DISPLAY_HEIGHT, "OpenGL");
-	
-	Vertex vertices[] =
-	{
-		Vertex(glm::vec3(-1, -1, -1), glm::vec2(1, 0), glm::vec3(0, 0, -1),glm::vec3(0, 0, 1)),
-		Vertex(glm::vec3(-1, 1, -1), glm::vec2(0, 0), glm::vec3(0, 0, -1),glm::vec3(0, 0, 1)),
-		Vertex(glm::vec3(1, 1, -1), glm::vec2(0, 1), glm::vec3(0, 0, -1),glm::vec3(0, 0, 1)),
-		Vertex(glm::vec3(1, -1, -1), glm::vec2(1, 1), glm::vec3(0, 0, -1),glm::vec3(0, 0, 1)),
-
-		Vertex(glm::vec3(-1, -1, 1), glm::vec2(1, 0), glm::vec3(0, 0, 1),glm::vec3(0, 0, 1)),
-		Vertex(glm::vec3(-1, 1, 1), glm::vec2(0, 0), glm::vec3(0, 0, 1),glm::vec3(0, 0, 1)),
-		Vertex(glm::vec3(1, 1, 1), glm::vec2(0, 1), glm::vec3(0, 0, 1),glm::vec3(0, 0, 1)),
-		Vertex(glm::vec3(1, -1, 1), glm::vec2(1, 1), glm::vec3(0, 0, 1),glm::vec3(0, 0, 1)),
-
-		Vertex(glm::vec3(-1, -1, -1), glm::vec2(0, 1), glm::vec3(0, -1, 0),glm::vec3(0, 1, 0)),
-		Vertex(glm::vec3(-1, -1, 1), glm::vec2(1, 1), glm::vec3(0, -1, 0),glm::vec3(0, 1, 0)),
-		Vertex(glm::vec3(1, -1, 1), glm::vec2(1, 0), glm::vec3(0, -1, 0),glm::vec3(0, 1, 0)),
-		Vertex(glm::vec3(1, -1, -1), glm::vec2(0, 0), glm::vec3(0, -1, 0),glm::vec3(0, 1, 0)),
-
-		Vertex(glm::vec3(-1, 1, -1), glm::vec2(0, 1), glm::vec3(0, 1, 0),glm::vec3(0, 1, 0)),
-		Vertex(glm::vec3(-1, 1, 1), glm::vec2(1, 1), glm::vec3(0, 1, 0),glm::vec3(0, 1, 0)),
-		Vertex(glm::vec3(1, 1, 1), glm::vec2(1, 0), glm::vec3(0, 1, 0),glm::vec3(0, 1, 0)),
-		Vertex(glm::vec3(1, 1, -1), glm::vec2(0, 0), glm::vec3(0, 1, 0),glm::vec3(0, 1, 0)),
-
-		Vertex(glm::vec3(-1, -1, -1), glm::vec2(1, 1), glm::vec3(-1, 0, 0),glm::vec3(1, 0, 0)),
-		Vertex(glm::vec3(-1, -1, 1), glm::vec2(1, 0), glm::vec3(-1, 0, 0),glm::vec3(1, 0, 0)),
-		Vertex(glm::vec3(-1, 1, 1), glm::vec2(0, 0), glm::vec3(-1, 0, 0),glm::vec3(1, 0, 0)),
-		Vertex(glm::vec3(-1, 1, -1), glm::vec2(0, 1), glm::vec3(-1, 0, 0),glm::vec3(1, 0, 0)),
-
-		Vertex(glm::vec3(1, -1, -1), glm::vec2(1, 1), glm::vec3(1, 0, 0),glm::vec3(1, 0, 0)),
-		Vertex(glm::vec3(1, -1, 1), glm::vec2(1, 0), glm::vec3(1, 0, 0),glm::vec3(1, 0, 0)),
-		Vertex(glm::vec3(1, 1, 1), glm::vec2(0, 0), glm::vec3(1, 0, 0),glm::vec3(1, 0, 0)),
-		Vertex(glm::vec3(1, 1, -1), glm::vec2(0, 1), glm::vec3(1, 0, 0),glm::vec3(1, 0, 0))
-	};
-
-	unsigned int indices[] = {0, 1, 2,
-							  0, 2, 3,
-
-							  6, 5, 4,
-							  7, 6, 4,
-
-							  10, 9, 8,
-							  11, 10, 8,
-
-							  12, 13, 14,
-							  12, 14, 15,
-
-							  16, 17, 18,
-							  16, 18, 19,
-
-							  22, 21, 20,
-							  23, 22, 20
-	                          };
-    Mesh mesh(vertices, sizeof(vertices)/sizeof(vertices[0]), indices, sizeof(indices)/sizeof(indices[0]));
-	Shader shader("./res/shaders/basicShader");
-
-	auto pos = vec3(0,0,-15);
+	auto pos = -vec3(0.0f, 0.0f, 8.0f * ARRAY_LENGTH);
 	auto forward = glm::vec3(0.0f, 0.0f, 1.0f);
 	auto up = glm::vec3(0.0f, 1.0f, 0.0f);
-	auto P = glm::perspective(60.0f, float(DISPLAY_WIDTH) / float(DISPLAY_HEIGHT), 0.1f, 100.0f);
+	P = glm::perspective(60.0f, float(DISPLAY_WIDTH) / float(DISPLAY_HEIGHT), 0.1f, 100.0f);
 	P = P * glm::lookAt(pos, pos + forward, up);
-	mat4 M, MVP;
 
-	auto cube = mat4(1);
-	mat4 chains[] = {
-		mat4(1),
-		mat4(1),
-		mat4(1),
-		mat4(1)
-	};
+	cubes = new glm::mat4[ARRAY_LENGTH];
+	colors = new glm::vec3[ARRAY_LENGTH];
+	sceneX = mat4(1);
+	sceneZ = mat4(1);
+
+	cubes[0] = mat4(1);
+	cubes[0] = glm::translate(vec3(5.0f, 0.0f, 0.0f)) * cubes[0];
+	cubes[0] = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * cubes[0];
+	colors[0] = glm::vec3(0.0f, 1.0f, 1.0f);
+
+	for (auto i = 1; i < ARRAY_LENGTH; i++)
+	{
+		cubes[i] = mat4(1);
+		cubes[i] = glm::translate(vec3(0, 0, SCALE_FACTOR.z) * float(i-1) * float(CUBE_SIZE)) * cubes[i];
+		cubes[i] = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * cubes[i];
+		cubes[i] = glm::scale(cubes[i], SCALE_FACTOR);
+
+		colors[i] = glm::vec3(float(i) / 255.0f, 1.0f, 1.0f);
+	}
 
 	glfwSetKeyCallback(display.m_window,key_callback);
+	glfwSetMouseButtonCallback(display.m_window, mouse_callback);
 
 	while(!glfwWindowShouldClose(display.m_window))
 	{
@@ -93,22 +45,16 @@ int main(int argc, char** argv)
 		display.Clear(1.0f, 1.0f, 1.0f, 1.0f);
 		shader.Bind();
 
-		M = glm::translate(vec3(5, 0, 0));
-		M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
-		MVP = P*M;
-		shader.Update(MVP,M);
-		mesh.Draw();
-
-		for (auto i = 0; i < 4; i++)
+		for (auto i = 0; i < ARRAY_LENGTH; i++)
 		{
-			M = glm::translate(mat4(1), vec3(0, 0, SCALE_FACTOR.z) * float(i) * float(CUBE_SIZE) * DELTA);
-			M = glm::scale(M, SCALE_FACTOR);
-			M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
-			MVP = P*M;
-			shader.Update(MVP, M);
+			M = sceneX * sceneZ * /*cubes[i-1] * */ cubes[i];
+			MVP = P * M;
+			shader.Update(MVP, M, colors[i]);
 			mesh.Draw();
-		}
 
+			drawLine(vec3(float(AXIS_LENGTH), 0.0f, -1.0f), vec3(-float(AXIS_LENGTH), 0.0f, -1.0f));
+			drawLine(vec3(0.0f, 0.0f, float(AXIS_LENGTH)), vec3(0.0f, 0.0f, -float(AXIS_LENGTH)));
+		}
 
 		display.SwapBuffers();
 		glfwPollEvents();
@@ -116,7 +62,6 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
 
 
 

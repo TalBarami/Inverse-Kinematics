@@ -10,7 +10,7 @@ public:
 	Shader(const std::string& fileName);
 
 	void Bind();
-	void Update(glm::mat4 MVP,glm::mat4 Normal);
+	void Update(glm::mat4 MVP,glm::mat4 Normal, glm::vec3 color);
 
 	virtual ~Shader();
 protected:
