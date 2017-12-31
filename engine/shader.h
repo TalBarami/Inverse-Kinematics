@@ -16,7 +16,7 @@ public:
 protected:
 private:
 	static const unsigned int NUM_SHADERS = 2;
-	static const unsigned int NUM_UNIFORMS = 4;
+	static const unsigned int NUM_UNIFORMS = 4; // 5;
 	void operator=(const Shader& shader) {}
 	Shader(const Shader& shader) {}
 	

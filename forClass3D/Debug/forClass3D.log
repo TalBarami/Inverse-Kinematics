@@ -1,3 +1,4 @@
 ﻿  main.cpp
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(168): warning C4244: 'argument': conversion from 'double' to 'GLint', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(231): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(267): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
   forClass3D.vcxproj -> C:\Users\Tal\Documents\GitHub\Kinematics\Debug\forClass3D.exe

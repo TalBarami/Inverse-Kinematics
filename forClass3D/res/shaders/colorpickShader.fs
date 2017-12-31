@@ -5,9 +5,9 @@ varying vec3 normal0;
 varying vec3 color0;
 
 uniform vec3 lightDirection;
-uniform vec3 lightColor;
+uniform vec3 pickColor;
 
 void main()
 {
-	gl_FragColor =  vec4(lightColor.x, lightColor.y, lightColor.z, 1.0f);
+	gl_FragColor =  vec4(pickColor.x, pickColor.y, pickColor.z, 1.0f);
 }
