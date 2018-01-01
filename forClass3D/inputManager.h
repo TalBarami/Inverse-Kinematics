@@ -4,6 +4,7 @@
 #include "Scene.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 using namespace glm;
 
@@ -15,6 +16,7 @@ static const int CUBE_SIZE = 2;
 static const glm::vec3 SCALE_FACTOR = glm::vec3(1.0f, 1.0f, 2.0f);
 static const float AXIS_LENGTH = 4.0f;
 static const float ROTATION_ANGLE = 1.0f;
+static const float PI = 3.1415;
 
 Cube* chain;
 Cube box;
@@ -23,6 +25,7 @@ glm::mat4 M, N, P, MVP;
 
 bool rotateMouse;
 bool translateMouse;
+double clickX, clickY;
 
 int selected = -1;
 
@@ -168,13 +171,14 @@ inline void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	}
 }
 
-inline void followMouse()
+inline void translateToMouse()
 {
-	double xPos, yPos;
-	glfwGetCursorPos(display.m_window, &xPos, &yPos);
-	yPos = DISPLAY_HEIGHT - yPos;
+	double x2, y2;
+	glfwGetCursorPos(display.m_window, &x2, &y2);
+	y2 = DISPLAY_HEIGHT - y2;
 
-	auto dst = vec3(xPos, 0.0f, yPos);
+	auto dst = vec3(clickX - x2, 0.0f, DISPLAY_HEIGHT - (clickY - y2));
+	dst /= 1000;
 	if (selected == ARRAY_LENGTH)
 	{
 		box.translate(dst);
@@ -183,6 +187,32 @@ inline void followMouse()
 	{
 		chain[0].translate(dst);
 	}
+	clickX = x2;
+	clickY = y2;
+}
+
+inline void rotateToMouse()
+{
+	double x2, y2;
+	glfwGetCursorPos(display.m_window, &x2, &y2);
+
+	float dx = clickX - x2;
+	float dy = clickY - y2;
+	auto thetaX = atan(dy / dx);
+	auto thetaY = atan(dx / dy);
+
+	auto eulerX = glm::eulerAngleX(thetaX);
+	//auto eulerY = glm::eulerAngleY(thetaY);
+	auto eulerZ = glm::eulerAngleZ(thetaY);
+
+	if (selected == ARRAY_LENGTH)
+	{
+		box.rotates = eulerX * eulerZ * box.rotates_pick;
+	}
+	else if(selected >= 0)
+	{
+		chain[selected].rotates = eulerX * eulerZ * chain[selected].rotates_pick;
+	}
 }
 
 inline void drawScene(Shader& shader, bool drawAxis)
@@ -190,10 +220,14 @@ inline void drawScene(Shader& shader, bool drawAxis)
 	display.Clear(1.0f, 1.0f, 1.0f, 1.0f);
 	shader.Bind();
 
-	/*if(translateMouse)
+	if(translateMouse)
 	{
-		followMouse();
-	}*/
+		translateToMouse();
+	}
+	if(rotateMouse)
+	{
+		rotateToMouse();
+	}
 
 	M = scene.rotation * box.rotates * box.translates;
 	MVP = P * M;
@@ -258,13 +292,15 @@ inline void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	std::cout << "mouse_callback: button=" << button << ", action=" << action << ", mods=" << mods << std::endl;
 
-	double xPos, yPos;
-	glfwGetCursorPos(window, &xPos, &yPos);
-	yPos = DISPLAY_HEIGHT - yPos;
-	std::cout << "Cursor Position at (" << xPos << " : " << yPos << ")" << std::endl;
+	glfwGetCursorPos(window, &clickX, &clickY);
+	clickY = DISPLAY_HEIGHT - clickY;
+	std::cout << "Cursor Position at (" << clickX << " : " << clickY << ")" << std::endl;
 
-	drawScene(colorpickShader, false);
-	pick(xPos, yPos);
+	if(action == GLFW_PRESS)
+	{
+		drawScene(colorpickShader, false);
+		pick(clickX, clickY);
+	}
 
 	switch (button)
 	{
@@ -272,24 +308,28 @@ inline void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 		switch (action)
 		{
 		case GLFW_PRESS:
+			rotateMouse = selected != -1;
 			break;
 		case GLFW_RELEASE:
+			rotateMouse = false;
 			break;
 		default:
 			break;
 		}
+		break;
 	case GLFW_MOUSE_BUTTON_RIGHT:
 		switch (action)
 		{
 		case GLFW_PRESS:
-			//translateMouse = selected != -1;
+			translateMouse = selected != -1;
 			break;
 		case GLFW_RELEASE:
-			//translateMouse = false;
+			translateMouse = false;
 			break;
 		default:
 			break;
 		}
+		break;
 	default:
 		break;
 	}

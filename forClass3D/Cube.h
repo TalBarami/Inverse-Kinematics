@@ -5,7 +5,6 @@
 
 class Cube
 {
-
 public:
 	Cube();
 	~Cube();
@@ -17,5 +16,6 @@ public:
 	glm::mat4 rotates;
 	glm::vec3 angles;
 	glm::vec3 color;
+	glm::mat4 rotates_pick;
 };
 
