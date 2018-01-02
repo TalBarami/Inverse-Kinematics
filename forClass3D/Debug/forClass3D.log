@@ -1,7 +1,11 @@
-﻿  main.cpp
+﻿  Cube.cpp
+  Generating Code...
+  Compiling...
+  main.cpp
 c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(19): warning C4305: 'initializing': truncation from 'double' to 'float'
 c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(199): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(200): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(265): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(302): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(260): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(297): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
   forClass3D.vcxproj -> C:\Users\Tal\Documents\GitHub\Kinematics\Debug\forClass3D.exe

@@ -1,5 +1,5 @@
 #include "Cube.h"
-
+#include <glm/gtx/euler_angles.inl>
 
 
 Cube::Cube()
@@ -23,6 +23,14 @@ void Cube::rotate(float angle, glm::vec3 direction)
 	angles.y += angle * direction.y;
 	angles.z += angle * direction.z;
 	rotates_pick = rotates;
+}
+
+void Cube::rotate(float theta)
+{
+	auto eulerX = glm::eulerAngleX(theta);
+	auto eulerZ = glm::eulerAngleZ(theta);
+
+	rotates = eulerX * eulerZ * rotates_pick;
 }
 
 Cube::~Cube()

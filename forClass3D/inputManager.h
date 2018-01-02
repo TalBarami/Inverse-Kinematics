@@ -198,20 +198,15 @@ inline void rotateToMouse()
 
 	float dx = clickX - x2;
 	float dy = clickY - y2;
-	auto thetaX = atan(dy / dx);
-	auto thetaY = atan(dx / dy);
-
-	auto eulerX = glm::eulerAngleX(thetaX);
-	//auto eulerY = glm::eulerAngleY(thetaY);
-	auto eulerZ = glm::eulerAngleZ(thetaY);
+	auto theta = atan(dy / dx);
 
 	if (selected == ARRAY_LENGTH)
 	{
-		box.rotates = eulerX * eulerZ * box.rotates_pick;
+		box.rotate(theta);
 	}
 	else if(selected >= 0)
 	{
-		chain[selected].rotates = eulerX * eulerZ * chain[selected].rotates_pick;
+		chain[selected].rotate(theta);
 	}
 }
 

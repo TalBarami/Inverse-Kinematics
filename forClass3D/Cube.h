@@ -10,6 +10,7 @@ public:
 	~Cube();
 
 	void rotate(float angle, glm::vec3 direction);
+	void rotate(float theta);
 	void translate(glm::vec3 direction);
 
 	glm::mat4 translates;
