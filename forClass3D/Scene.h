@@ -9,7 +9,12 @@ public:
 	Scene();
 	~Scene();
 	
+	void rotate(float rx, float ry);
+	glm::mat4 rotates;
+	
+private:
+	glm::vec3 angles;
+
 	void rotate(float angle, glm::vec3 direction);
-	glm::mat4 rotation;
 };
 

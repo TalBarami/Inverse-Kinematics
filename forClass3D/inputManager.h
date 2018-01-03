@@ -10,22 +10,24 @@ using namespace glm;
 
 static const int DISPLAY_WIDTH = 800;
 static const int DISPLAY_HEIGHT = 800;
+static const float CAM_ANGLE = 60.0f;
+static const float REL = float(DISPLAY_WIDTH) / float(DISPLAY_HEIGHT);
+static const float pNEAR = 0.1f;
+static const float pFAR = 100.0f;
 
 static const int ARRAY_LENGTH = 4;
 static const int CUBE_SIZE = 2;
 static const glm::vec3 SCALE_FACTOR = glm::vec3(1.0f, 1.0f, 2.0f);
 static const float AXIS_LENGTH = 4.0f;
-static const float ROTATION_ANGLE = 1.0f;
-static const float PI = 3.1415;
+static const float PI = 3.14159265359;
 
 Cube* chain;
-Cube box;
 Scene scene;
 glm::mat4 M, N, P, MVP;
 
 bool rotateMouse;
 bool translateMouse;
-double clickX, clickY;
+double prevX, prevY;
 
 int selected = -1;
 
@@ -97,53 +99,10 @@ inline void drawLine(glm::vec3 p1, glm::vec3 p2)
 	glEnd();
 }
 
-inline void rotateX(float direction)
-{
-	auto xRotation = vec3(1.0f, 0.0f, 0.0f);
-	auto rotation = direction * 5.0f;
-	if(selected == -1)
-	{
-		scene.rotate(rotation, xRotation);
-	}
-	else if (abs(chain[selected].angles.x) < 45.0f || chain[selected].angles.x * direction <= 0)
-	{
-		chain[selected].rotate(rotation, xRotation);
-	}
-}
-
-inline void rotateY(float direction)
-{
-	auto yRotation = vec3(0.0f, 1.0f, 0.0f);
-	auto rotation = direction * 5.0f;
-	if (selected == -1)
-	{
-		scene.rotate(rotation, yRotation);
-	}
-	else if (abs(chain[selected].angles.y) < 45.0f || chain[selected].angles.y * direction <= 0)
-	{
-		chain[selected].rotate(rotation, yRotation);
-	}
-}
-
-
-inline void rotateZ(float direction)
-{
-	auto zRotation = vec3(0.0f, 0.0f, 1.0f);
-	auto rotation = direction * 5.0f;
-	if (selected == -1)
-	{
-		scene.rotate(rotation, zRotation);
-	}
-	else //if (abs(chain[selected].angles.z) < 45.0f || chain[selected].angles.z * direction <= 0)
-	{
-		chain[selected].rotate(rotation, zRotation);
-	}
-}
-
 
 inline void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	std::cout << "key_callback: key=" << key << " scancode=" << scancode << " action=" << action << " mods=" << mods << std::endl;
+	//std::cout << "key_callback: key=" << key << " scancode=" << scancode << " action=" << action << " mods=" << mods << std::endl;
 	if (action != GLFW_PRESS && action != GLFW_REPEAT)
 	{
 		return;
@@ -151,16 +110,16 @@ inline void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	switch (key)
 	{
 	case GLFW_KEY_UP:
-		rotateX(1.0f);
+		selected == -1 ? scene.rotate(5.0f, 0.0f) : chain[selected].rotate(5.0f, 0.0f);
 		break;
 	case GLFW_KEY_DOWN:
-		rotateX(-1.0f);
+		selected == -1 ? scene.rotate(-5.0f, 0.0f) : chain[selected].rotate(5.0f, 0.0f);
 		break;
 	case GLFW_KEY_RIGHT:
-		rotateZ(-1.0f);
+		selected == -1 ? scene.rotate(0.0f, -5.0f) : chain[selected].rotate(0.0f, -5.0f);
 		break;
 	case GLFW_KEY_LEFT:
-		rotateZ(1.0f);
+		selected == -1 ? scene.rotate(0.0f, 5.0f) : chain[selected].rotate(0.0f, 5.0f);
 		break;
 	case GLFW_KEY_ESCAPE:
 		if (action == GLFW_PRESS)
@@ -171,43 +130,46 @@ inline void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	}
 }
 
-inline void translateToMouse()
+inline void translateToMouse(float xpos, float ypos)
 {
-	double x2, y2;
-	glfwGetCursorPos(display.m_window, &x2, &y2);
-	y2 = DISPLAY_HEIGHT - y2;
+	auto relation = float(DISPLAY_WIDTH) / float(DISPLAY_HEIGHT);
+	float depth;
+	
+	glReadPixels(xpos, ypos, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+	ypos = DISPLAY_HEIGHT - ypos;
+	float xRel = prevX - xpos;
+	float yRel = prevY - ypos;
 
-	auto dst = vec3(clickX - x2, 0.0f, DISPLAY_HEIGHT - (clickY - y2));
-	dst /= 1000;
+	std::cout << xRel << "," << yRel << std::endl;
+
+	auto z = pFAR + depth * (pNEAR - pFAR);
+	auto transX = relation * xRel / float(DISPLAY_WIDTH) * pNEAR * 2.0 * tan(CAM_ANGLE * PI / 360.0) * (pFAR / z);
+	auto transY = yRel / float(DISPLAY_HEIGHT) * pNEAR * 2.0 * tan(CAM_ANGLE * PI / 360.0) * (pFAR / z);
+
+	auto dst = vec3(transX, 0.0f, -transY);
+
+
 	if (selected == ARRAY_LENGTH)
 	{
-		box.translate(dst);
+		chain[ARRAY_LENGTH].translate(dst);
 	}
 	else if (selected >= 0)
 	{
 		chain[0].translate(dst);
 	}
-	clickX = x2;
-	clickY = y2;
+	prevX = xpos;
+	prevY = ypos;
 }
 
-inline void rotateToMouse()
+inline void rotateToMouse(float xpos, float ypos)
 {
-	double x2, y2;
-	glfwGetCursorPos(display.m_window, &x2, &y2);
+	float xRel = prevX - xpos;
+	float yRel = prevY - ypos;
 
-	float dx = clickX - x2;
-	float dy = clickY - y2;
-	auto theta = atan(dy / dx);
+	selected == -1 ? scene.rotate(yRel, xRel) : chain[selected].rotate(yRel, xRel);
 
-	if (selected == ARRAY_LENGTH)
-	{
-		box.rotate(theta);
-	}
-	else if(selected >= 0)
-	{
-		chain[selected].rotate(theta);
-	}
+	prevX = xpos;
+	prevY = ypos;
 }
 
 inline void drawScene(Shader& shader, bool drawAxis)
@@ -215,25 +177,17 @@ inline void drawScene(Shader& shader, bool drawAxis)
 	display.Clear(1.0f, 1.0f, 1.0f, 1.0f);
 	shader.Bind();
 
-	if(translateMouse)
-	{
-		translateToMouse();
-	}
-	if(rotateMouse)
-	{
-		rotateToMouse();
-	}
-
-	M = scene.rotation * box.rotates * box.translates;
+	M = scene.rotates * chain[ARRAY_LENGTH].translates * chain[ARRAY_LENGTH].rotates;
+	M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
 	MVP = P * M;
-	shader.Update(MVP, M, box.color);
+	shader.Update(MVP, M, chain[ARRAY_LENGTH].color);
 	mesh.Draw();
 
 	for (auto i = 0; i < ARRAY_LENGTH; i++)
 	{
 		if (i == 0)
 		{
-			M = scene.rotation * chain[i].rotates * chain[i].translates;
+			M = scene.rotates * chain[i].rotates * chain[i].translates;
 			M = glm::scale(SCALE_FACTOR) * M;
 			M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
 		}
@@ -261,13 +215,8 @@ inline void pick(float xPos, float yPos)
 	std::cout << "Color: (" << color.r << ", " << color.g << ", " << color.b << ")" << std::endl;
 
 	auto selection = false;
-	if (box.color == color)
-	{
-		selected = ARRAY_LENGTH;
-		std::cout << "Selected: " << selected << std::endl;
-		selection = true;
-	}
-	for (auto i = 0; i < ARRAY_LENGTH && !selection; i++)
+
+	for (auto i = 0; i < ARRAY_LENGTH + 1 && !selection; i++)
 	{
 		if (chain[i].color == color)
 		{
@@ -285,16 +234,16 @@ inline void pick(float xPos, float yPos)
 
 inline void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 {
-	std::cout << "mouse_callback: button=" << button << ", action=" << action << ", mods=" << mods << std::endl;
+	//std::cout << "mouse_callback: button=" << button << ", action=" << action << ", mods=" << mods << std::endl;
 
-	glfwGetCursorPos(window, &clickX, &clickY);
-	clickY = DISPLAY_HEIGHT - clickY;
-	std::cout << "Cursor Position at (" << clickX << " : " << clickY << ")" << std::endl;
+	glfwGetCursorPos(window, &prevX, &prevY);
+	prevY = DISPLAY_HEIGHT - prevY;
+	std::cout << "Cursor Position at (" << prevX << " : " << prevY << ")" << std::endl;
 
 	if(action == GLFW_PRESS)
 	{
 		drawScene(colorpickShader, false);
-		pick(clickX, clickY);
+		pick(prevX, prevY);
 	}
 
 	switch (button)
@@ -303,7 +252,7 @@ inline void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 		switch (action)
 		{
 		case GLFW_PRESS:
-			rotateMouse = selected != -1;
+			rotateMouse = true;
 			break;
 		case GLFW_RELEASE:
 			rotateMouse = false;
@@ -332,14 +281,26 @@ inline void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 
 inline void scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
 {
-	std::cout << "scroll_callback: xOffset=" << xOffset << ", yOffset=" << yOffset << std::endl;
 	auto dst = vec3(0.0f, yOffset, 0.0f);
 	if (selected == ARRAY_LENGTH)
 	{
-		box.translate(dst);
+		chain[ARRAY_LENGTH].translate(dst);
 	}
 	else if (selected >= 0)
 	{
 		chain[0].translate(dst);
+	}
+}
+
+inline void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
+{
+	//std::cout << "cursor_position_callback: xpos=" << xpos << ", ypos=" << ypos << std::endl;
+	if (translateMouse)
+	{
+		translateToMouse(xpos, ypos);
+	}
+	if (rotateMouse)
+	{
+		rotateToMouse(xpos, ypos);
 	}
 }
