@@ -1,5 +1,5 @@
-Debug/
-logs/
+*\Debug\
+*\logs\
 *.sdf
 *.opensdf
 *.suo
