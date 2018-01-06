@@ -28,6 +28,7 @@ glm::mat4 M, N, P, MVP;
 bool rotateMouse;
 bool translateMouse;
 double prevX, prevY;
+GLfloat depth[1];
 
 int selected = -1;
 
@@ -132,30 +133,25 @@ inline void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 inline void translateToMouse(float xpos, float ypos)
 {
-	auto relation = float(DISPLAY_WIDTH) / float(DISPLAY_HEIGHT);
-	float depth;
-	
-	glReadPixels(xpos, ypos, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-	ypos = DISPLAY_HEIGHT - ypos;
 	float xRel = prevX - xpos;
 	float yRel = prevY - ypos;
-
 	std::cout << xRel << "," << yRel << std::endl;
 
-	auto z = pFAR + depth * (pNEAR - pFAR);
-	auto transX = relation * xRel / float(DISPLAY_WIDTH) * pNEAR * 2.0 * tan(CAM_ANGLE * PI / 360.0) * (pFAR / z);
-	auto transY = yRel / float(DISPLAY_HEIGHT) * pNEAR * 2.0 * tan(CAM_ANGLE * PI / 360.0) * (pFAR / z);
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
 
-	auto dst = vec3(transX, 0.0f, -transY);
-
+	auto relation = float(DISPLAY_WIDTH) / float(DISPLAY_HEIGHT);
+	auto z = pFAR + *depth * (pNEAR - pFAR);
+	auto transX = relation * xRel / float(viewport[2]) * pNEAR * 2.0 * glm::tan(CAM_ANGLE * PI / 360.0) * (pFAR / z);
+	auto transY = yRel / float(viewport[3]) * pNEAR * 2.0 * glm::tan(CAM_ANGLE * PI / 360.0) * (pFAR / z);
 
 	if (selected == ARRAY_LENGTH)
 	{
-		chain[ARRAY_LENGTH].translate(dst);
+		chain[ARRAY_LENGTH].translate(vec3(transX, 0.0f, -transY));
 	}
 	else if (selected >= 0)
 	{
-		chain[0].translate(dst);
+		chain[0].translate(vec3(transX, 0.0f, -transY / 2.0f));
 	}
 	prevX = xpos;
 	prevY = ypos;
@@ -238,7 +234,8 @@ inline void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 
 	glfwGetCursorPos(window, &prevX, &prevY);
 	prevY = DISPLAY_HEIGHT - prevY;
-	std::cout << "Cursor Position at (" << prevX << " : " << prevY << ")" << std::endl;
+	glReadPixels(prevX, prevY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depth);
+	std::cout << "Cursor Position at (" << prevX << " : " << prevY << "), depth = " << depth << std::endl;
 
 	if(action == GLFW_PRESS)
 	{
@@ -295,6 +292,7 @@ inline void scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
 inline void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
 {
 	//std::cout << "cursor_position_callback: xpos=" << xpos << ", ypos=" << ypos << std::endl;
+	ypos = DISPLAY_HEIGHT - ypos;
 	if (translateMouse)
 	{
 		translateToMouse(xpos, ypos);

@@ -1,15 +1,12 @@
 ﻿  main.cpp
 c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(22): warning C4305: 'initializing': truncation from 'double' to 'float'
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(138): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(140): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(141): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(166): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(167): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(214): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(246): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(300): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(304): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-  Generating Code...
-  Skipping... (no relevant changes detected)
-  Cube.cpp
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(136): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(137): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(162): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(163): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(210): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(237): warning C4244: 'argument': conversion from 'double' to 'GLint', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(243): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(298): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+c:\users\tal\documents\github\kinematics\forclass3d\inputmanager.h(302): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
   forClass3D.vcxproj -> C:\Users\Tal\Documents\GitHub\Kinematics\Debug\forClass3D.exe
