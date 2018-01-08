@@ -26,6 +26,12 @@ void Scene::rotate(float rx, float rz)
 	rotates = eulerZ * eulerX;
 }
 
+void Scene::reset()
+{
+	rotates = glm::mat4(1);
+	angles = glm::vec3(0);
+}
+
 Scene::~Scene()
 {
 }

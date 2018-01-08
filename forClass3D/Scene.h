@@ -10,8 +10,10 @@ public:
 	~Scene();
 	
 	void rotate(float rx, float ry);
+	void reset();
+
 	glm::mat4 rotates;
-	
+
 private:
 	glm::vec3 angles;
 

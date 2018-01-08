@@ -13,8 +13,12 @@ int main(int argc, char** argv)
 	auto pos = -vec3(0.0f, 0.0f, 8.0f * ARRAY_LENGTH);
 	auto forward = glm::vec3(0.0f, 0.0f, 1.0f);
 	auto up = glm::vec3(0.0f, 1.0f, 0.0f);
-	P = glm::perspective(CAM_ANGLE, REL, pNEAR, pFAR);
+	P = glm::perspective(CAM_ANGLE, float(DISPLAY_WIDTH) / float(DISPLAY_HEIGHT), pNEAR, pFAR);
 	P = P * glm::lookAt(pos, pos + forward, up);
+
+	ikSolver = false;
+	rotateMouse = false;
+	translateMouse = false;
 
 	chain = new Cube[ARRAY_LENGTH + 1];
 
@@ -24,7 +28,7 @@ int main(int argc, char** argv)
 	for (auto i = 0; i < ARRAY_LENGTH; i++)
 	{
 		chain[i].color = vec3(float(i) / 255.0f, 1.0f, 1.0f);
-		chain[i].setLimit(45.0f);
+		chain[i].setLimit(ROTATION_LIMIT);
 	}
 
 	glfwSetKeyCallback(display.m_window,key_callback);

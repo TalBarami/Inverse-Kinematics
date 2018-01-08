@@ -1,7 +1,6 @@
 #pragma once
-#include "GLFW/glfw3.h"
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+#include <string>
 
 class Cube
 {
@@ -11,16 +10,22 @@ public:
 
 	void translate(glm::vec3 direction);
 	void rotate(float rx, float ry);
+	void rotate(float angle, glm::vec3 direction);
+	void reset();
 
 	void setLimit(float limit);
 
 	glm::mat4 translates;
+	glm::mat4 M;
+
 	glm::mat4 rotates;
+	glm::vec3 angles;
+
+	glm::mat4 ikRotates;
+	glm::vec3 ikAngles;
+
 	glm::vec3 color;
 
-private:
-	glm::vec3 angles;
 	float limit;
-	void rotate(float angle, glm::vec3 direction);
 };
 
