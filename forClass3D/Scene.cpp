@@ -8,11 +8,6 @@ Scene::Scene()
 	angles = glm::vec3(0);
 }
 
-void Scene::rotate(float angle, glm::vec3 direction)
-{
-	rotates = glm::rotate(angle, direction) * rotates;
-}
-
 void Scene::rotate(float rx, float rz)
 {
 	rx = glm::radians(rx);

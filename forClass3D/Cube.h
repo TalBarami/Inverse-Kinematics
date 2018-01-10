@@ -9,6 +9,7 @@ public:
 	~Cube();
 
 	void translate(glm::vec3 direction);
+	void position(glm::vec3 direction);
 	void rotate(float rx, float ry);
 	void rotate(float angle, glm::vec3 direction);
 	void reset();
@@ -22,7 +23,6 @@ public:
 	glm::vec3 angles;
 
 	glm::mat4 ikRotates;
-	glm::vec3 ikAngles;
 
 	glm::vec3 color;
 

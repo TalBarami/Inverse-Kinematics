@@ -10,7 +10,6 @@ Cube::Cube()
 	angles = glm::vec3(0);
 
 	ikRotates = glm::mat4(1);
-	ikAngles = glm::vec3(0);
 
 	limit = std::numeric_limits<float>::max();
 }
@@ -38,13 +37,7 @@ void Cube::rotate(float rx, float rz)
 
 void Cube::rotate(float angle, glm::vec3 direction)
 {
-	if (direction.x != 0.0f && abs(angles.x + angle) > limit)
-	{
-		return;
-	}
 	ikRotates = glm::rotate(angle, direction) * ikRotates;
-
-	ikAngles += (direction * glm::radians(angle));
 }
 
 void Cube::reset()
@@ -55,7 +48,6 @@ void Cube::reset()
 	angles = glm::vec3(0);
 
 	ikRotates = glm::mat4(1);
-	ikAngles = glm::vec3(0);
 }
 
 void Cube::setLimit(float limit)

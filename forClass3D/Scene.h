@@ -16,7 +16,5 @@ public:
 
 private:
 	glm::vec3 angles;
-
-	void rotate(float angle, glm::vec3 direction);
 };
 

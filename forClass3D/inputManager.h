@@ -9,7 +9,7 @@ using namespace glm;
 
 static const int ARRAY_LENGTH = 4;
 static const float AXIS_LENGTH = 10.0f;
-static const float ROTATION_LIMIT = 45.0f;
+static const float ROTATION_LIMIT = 60.0f;
 
 static const int DISPLAY_WIDTH = 800;
 static const int DISPLAY_HEIGHT = 800;
@@ -19,7 +19,9 @@ static const float pFAR = 100.0f;
 static const int CUBE_SIZE = 2;
 static const glm::vec3 SCALE_FACTOR = glm::vec3(1.0f, 1.0f, 2.0f);
 static const float PI = 3.14159265359f;
-static const float maxDistance = ARRAY_LENGTH * CUBE_SIZE * 2;
+
+static const float epsilon = 0.5f;
+static const float maxDistance = ARRAY_LENGTH * CUBE_SIZE * 2 - 1;
 
 Cube* chain;
 Scene scene;
@@ -28,7 +30,8 @@ glm::mat4 M, N, P, MVP;
 bool rotateMouse, translateMouse, ikSolver;
 double prevX, prevY;
 GLfloat depth[1];
-int selected = -1;
+auto selected = -1;
+auto current = ARRAY_LENGTH - 1;
 
 Vertex vertices[] =
 {
@@ -93,22 +96,43 @@ inline void printVector(std::string name, vec3 v)
 	std::cout << name << "= (" << v.x << "," << v.y << "," << v.z << ")" << std::endl;
 }
 
+inline vec3 fixZeroes(vec3 v)
+{
+	auto result = v;
+	if (abs(v.x) < 0.0001)
+	{
+		result.x = 0.0f;
+	}
+	if (abs(v.y) < 0.0001)
+	{
+		result.y = 0.0f;
+	}
+	if (abs(v.z) < 0.0001)
+	{
+		result.z = 0.0f;
+	}
+
+	return result;
+}
+
 inline vec3 getCoords(mat4 M)
 {
-	return vec3(M[3][0], M[3][1], M[3][2]);
+	auto v = vec3(M[3][0], M[3][2], M[3][1]);
+	return fixZeroes(v);
 }
 
 inline void printCube(int index)
 {
 	auto M = chain[index].M;
-	vec3 position;
-	if (index != ARRAY_LENGTH)
-	{
-		M = translate(M, vec3(0.0f, 0.0f, 1.0f));
-	}
+	vec3 position, root, end;
+
 	position = getCoords(M);
+	root = getCoords(translate(M, vec3(0.0f, 0.0f, -1.0f)));
+	end = getCoords(translate(M, vec3(0.0f, 0.0f, 1.0f)));
 	std::cout << "Cube[" << index << "]: " <<
 		"pos(" << position.x << ", " << position.y << ", " << position.z << "); " <<
+		"root(" << root.x << ", " << root.y << ", " << root.z << "); " <<
+		"end(" << end.x << ", " << end.y << ", " << end.z << "); " <<
 		"angles(" << chain[index].angles.x << ", " << chain[index].angles.y << ", " << chain[index].angles.z << ")" <<
 		std::endl;
 }
@@ -131,24 +155,35 @@ inline void reset()
 		chain[ARRAY_LENGTH].translate(vec3(5.0f, 0.0f, 0.0f));
 		scene.reset();
 		selected = -1;
+		current = ARRAY_LENGTH - 1;
 	}
 }
 
-int current = ARRAY_LENGTH - 1;
 inline void ccdStep()
 {
-	auto epsilon = 0.5;
+	auto R = getCoords(glm::translate(chain[current].M, vec3(0, 0, -1))); // Current
+	auto E = getCoords(glm::translate(chain[ARRAY_LENGTH - 1].M, vec3(0, 0, 1))); // End of chain
+	auto S = getCoords(glm::translate(chain[0].M, vec3(0, 0, -1))); // Source
+	auto D = getCoords(chain[ARRAY_LENGTH].M); // Destination
 
-	auto E = getCoords(glm::translate(chain[ARRAY_LENGTH - 1].M, vec3(0, 0, 1)));
-	auto D = getCoords(chain[ARRAY_LENGTH].M);
-	auto R = getCoords(glm::translate(chain[current].M, vec3(0, 0, -1)));
+	R.y = -R.y;
+	E.y = -E.y;
+	S.y = -S.y;
+	D.y = -D.y;
+
 	printVector("R", R);
 	printVector("E", E);
 	printVector("D", D);
-
+	printVector("S", S);
+	
+	if (distance(S, D) > maxDistance)
+	{
+		std::cout << "Error: can't reach!" << std::endl;
+		return;
+	}
 	if (distance(E, D) < epsilon)
 	{
-		ikSolver = false;
+		std::cout << "Done" << std::endl;
 		return;
 	}
 
@@ -157,16 +192,14 @@ inline void ccdStep()
 	printVector("RE", RE);
 	printVector("RD", RD);
 
-	auto theta = degrees(acos(clamp(dot(RE, RD), -0.99f, 0.99f)));
+	auto theta = degrees(acos(clamp(dot(RE, RD), -1.0f, 1.0f)));
+	theta = theta / 20.0f;
 	auto plane = cross(RE, RD);
+	plane = fixZeroes(plane);
 	printVector("Plane", plane);
 
-	theta = R.x < D.x ? theta : -theta;
 	std::cout << "theta = " << theta << std::endl;
-	chain[current].rotate(theta, vec3(0.0f, 1.0f, 0.0f));
-	//chain[a].rotate(theta, vec3(plane.x, 0.0f, 0.0f));
-	//chain[a].rotate(theta, vec3(0.0f, plane.y, 0.0f));
-	//chain[a].rotate(theta, vec3(0.0f, 0.0f, plane.z));
+	chain[current].rotate(theta, plane);
 	std::cout << "rotate chain[" << current << "]" << std::endl;
 	if (current == 0)
 	{
@@ -178,27 +211,17 @@ inline void ccdStep()
 inline void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	//std::cout << "key_callback: key=" << key << " scancode=" << scancode << " action=" << action << " mods=" << mods << std::endl;
-	if ((ikSolver && key != GLFW_KEY_SPACE) || (action != GLFW_PRESS && action != GLFW_REPEAT))
+	if (action != GLFW_PRESS && action != GLFW_REPEAT)
 	{
 		return;
 	}
-	vec3 src, dst;
 	switch (key)
 	{
 	case GLFW_KEY_SPACE:
-		src = getCoords(glm::translate(chain[0].M, vec3(0, 0, -1)));
-		dst = getCoords(chain[ARRAY_LENGTH].M);
-
-		if(distance(src, dst) > maxDistance)
+		ikSolver = !ikSolver;
+		if (!ikSolver)
 		{
-			std::cout << "Error: can't reach!" << std::endl;
-		} else
-		{
-			ikSolver = !ikSolver;
-			if (!ikSolver)
-			{
-				reset();
-			}
+			reset();
 		}
 		break;
 	case GLFW_KEY_F: {
@@ -207,19 +230,15 @@ inline void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	}
 	case GLFW_KEY_UP:
 		selected == -1 ? scene.rotate(5.0f, 0.0f) : chain[selected].rotate(5.0f, 0.0f);
-		printCube(selected);
 		break;
 	case GLFW_KEY_DOWN:
 		selected == -1 ? scene.rotate(-5.0f, 0.0f) : chain[selected].rotate(-5.0f, 0.0f);
-		printCube(selected);
 		break;
 	case GLFW_KEY_RIGHT:
 		selected == -1 ? scene.rotate(0.0f, 5.0f) : chain[selected].rotate(0.0f, 5.0f);
-		printCube(selected);
 		break;
 	case GLFW_KEY_LEFT:
 		selected == -1 ? scene.rotate(0.0f, -5.0f) : chain[selected].rotate(0.0f, -5.0f);
-		printCube(selected);
 		break;
 	case GLFW_KEY_ESCAPE:
 		if (action == GLFW_PRESS)
@@ -243,14 +262,8 @@ inline void translateToMouse(float xpos, float ypos)
 	auto transX = relation * xRel / float(viewport[2]) * pNEAR * 2.0 * glm::tan(CAM_ANGLE * PI / 360.0) * (pFAR / z);
 	auto transY = yRel / float(viewport[3]) * pNEAR * 2.0 * glm::tan(CAM_ANGLE * PI / 360.0) * (pFAR / z);
 
-	if (selected == ARRAY_LENGTH)
-	{
-		chain[ARRAY_LENGTH].translate(vec3(transX, 0.0f, -transY));
-	}
-	else if (selected >= 0)
-	{
-		chain[0].translate(vec3(transX, 0.0f, -transY / 2.0f));
-	}
+	chain[selected == ARRAY_LENGTH ? ARRAY_LENGTH : 0].translate(vec3(transX, 0.0f, -transY));
+	
 	prevX = xpos;
 	prevY = ypos;
 }
@@ -298,10 +311,9 @@ inline void drawScene(Shader& shader, bool drawAxis)
 	if (ikSolver)
 	{
 		ccdStep();
-		//Sleep(2000);
 	}
 
-	M = chain[ARRAY_LENGTH].translates * scene.rotates * chain[ARRAY_LENGTH].rotates * chain[ARRAY_LENGTH].ikRotates;
+	M = scene.rotates * chain[ARRAY_LENGTH].translates * chain[ARRAY_LENGTH].rotates * chain[ARRAY_LENGTH].ikRotates;
 	M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
 	chain[ARRAY_LENGTH].M = M;
 	MVP = P * M;
@@ -312,15 +324,15 @@ inline void drawScene(Shader& shader, bool drawAxis)
 	{
 		if (i == 0)
 		{
-			M = chain[i].translates * scene.rotates * chain[i].rotates * chain[i].ikRotates;
-			M = glm::scale(SCALE_FACTOR) * M;
+			M = scene.rotates * chain[i].translates * chain[i].rotates * chain[i].ikRotates;
 			M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
 		}
 		else
 		{
-			M = N * glm::translate(vec3(0, 0, 1)) * chain[i].translates * chain[i].rotates * chain[i].ikRotates * glm::translate(vec3(0, 0, 1));
+			M = N * glm::translate(vec3(0, 0, 2)) * chain[i].translates * chain[i].rotates * chain[i].ikRotates * glm::translate(vec3(0, 0, 2));
 		}
 		N = M;
+		M = glm::scale(M, vec3(1.0f, 1.0f, 2.0f));
 		chain[i].M = M;
 		MVP = P * M;
 		shader.Update(MVP, M, chain[i].color);
@@ -336,10 +348,6 @@ inline void drawScene(Shader& shader, bool drawAxis)
 
 inline void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 {
-	if(ikSolver)
-	{
-		return;
-	}
 	//std::cout << "mouse_callback: button=" << button << ", action=" << action << ", mods=" << mods << std::endl;
 
 	glfwGetCursorPos(window, &prevX, &prevY);
@@ -388,10 +396,6 @@ inline void mouse_callback(GLFWwindow* window, int button, int action, int mods)
 
 inline void scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
 {
-	if (ikSolver)
-	{
-		return;
-	}
 	auto dst = vec3(0.0f, yOffset, 0.0f);
 	if (selected == ARRAY_LENGTH)
 	{
@@ -405,10 +409,6 @@ inline void scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
 
 inline void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
 {
-	if (ikSolver)
-	{
-		return;
-	}
 	//std::cout << "cursor_position_callback: xpos=" << xpos << ", ypos=" << ypos << std::endl;
 	ypos = DISPLAY_HEIGHT - ypos;
 	if (translateMouse)
