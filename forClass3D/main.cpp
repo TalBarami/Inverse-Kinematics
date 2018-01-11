@@ -4,6 +4,7 @@
 #include "mesh.h"
 #include "shader.h"
 #include "inputManager.h"
+#include <stb_image.h>
 
 using namespace glm;
 
@@ -20,6 +21,9 @@ int main(int argc, char** argv)
 	rotateMouse = false;
 	translateMouse = false;
 
+	cubeData = stbi_load("./res/textures/grass.bmp", &cubeWidth, &cubeHeight, &cubeNumComponents, 3);
+	chainData = stbi_load("./res/textures/box0.bmp", &chainWidth, &chainHeight, &chainNumComponents, 3);
+
 	chain = new Cube[ARRAY_LENGTH + 1];
 
 	chain[ARRAY_LENGTH].translate(vec3(5.0f, 0.0f, 0.0f));
@@ -30,6 +34,9 @@ int main(int argc, char** argv)
 		chain[i].color = vec3(float(i) / 255.0f, 1.0f, 1.0f);
 		chain[i].setLimit(ROTATION_LIMIT);
 	}
+
+	shader.ApplyTexture(cubeWidth, cubeHeight, cubeData, 0);
+	shader.ApplyTexture(chainWidth, chainHeight, chainData, 1);
 
 	glfwSetKeyCallback(display.m_window,key_callback);
 	glfwSetMouseButtonCallback(display.m_window, mouse_callback);

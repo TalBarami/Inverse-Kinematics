@@ -11,6 +11,8 @@ varying vec3 color0;
 
 uniform mat4 MVP;
 uniform mat4 Normal;
+uniform vec4 selected;
+uniform sampler2D texture;
 
 void main()
 {

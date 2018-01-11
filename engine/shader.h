@@ -10,13 +10,14 @@ public:
 	Shader(const std::string& fileName);
 
 	void Bind();
-	void Update(glm::mat4 MVP,glm::mat4 Normal, glm::vec3 color);
+	void Update(glm::mat4 MVP,glm::mat4 Normal, glm::vec3 pickColor, int type, bool selected);
+	void ApplyTexture(int width, int height, unsigned char *data, int index);
 
 	virtual ~Shader();
 protected:
 private:
 	static const unsigned int NUM_SHADERS = 2;
-	static const unsigned int NUM_UNIFORMS = 4; // 5;
+	static const unsigned int NUM_UNIFORMS = 6;
 	void operator=(const Shader& shader) {}
 	Shader(const Shader& shader) {}
 	
@@ -27,6 +28,9 @@ private:
 	unsigned int m_program;
 	unsigned int m_shaders[NUM_SHADERS];
 	unsigned int m_uniforms[NUM_UNIFORMS];
+
+	GLuint textures[2];
+
 };
 
 #endif

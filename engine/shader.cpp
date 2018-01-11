@@ -4,7 +4,6 @@
 #include <iostream>
 #include <fstream>
 
-
 Shader::Shader(const std::string& fileName)
 {
 	
@@ -19,6 +18,8 @@ Shader::Shader(const std::string& fileName)
 	glBindAttribLocation(m_program, 1, "texCoord");
 	glBindAttribLocation(m_program, 2, "normal");
 	glBindAttribLocation(m_program, 3, "color");
+	glBindAttribLocation(m_program, 4, "selected");
+	glBindAttribLocation(m_program, 5, "texture");
 
 
 	glLinkProgram(m_program);
@@ -31,7 +32,8 @@ Shader::Shader(const std::string& fileName)
 	m_uniforms[1] = glGetUniformLocation(m_program, "Normal");
 	m_uniforms[2] = glGetUniformLocation(m_program, "lightDirection");
 	m_uniforms[3] = glGetUniformLocation(m_program, "pickColor");
-	//m_uniforms[4] = glGetUniformLocation(m_program, "displayColor"); - to mark selected.
+	m_uniforms[4] = glGetUniformLocation(m_program, "selected");
+	m_uniforms[5] = glGetUniformLocation(m_program, "texture");
 }
 
 Shader::~Shader()
@@ -50,14 +52,40 @@ void Shader::Bind()
 	glUseProgram(m_program);
 }
 
-void Shader::Update(glm::mat4 MVP, glm::mat4 Normal, glm::vec3 color)
+void Shader::Update(glm::mat4 MVP, glm::mat4 Normal, glm::vec3 pickColor, int type, bool selected)
 {
 	
 	glUniformMatrix4fv(m_uniforms[0], 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(m_uniforms[1], 1, GL_FALSE, &Normal[0][0]);
 	glUniform3f(m_uniforms[2], 0.0f, 0.0f, 1.0f);
-	glUniform3f(m_uniforms[3], color.x, color.y, color.z);
-	//glUniform3f(m_uniforms[4], color.x, color.y, color.z); - To mark selected. 
+	glUniform3f(m_uniforms[3], pickColor.x, pickColor.y, pickColor.z);
+
+	glBindTexture(GL_TEXTURE_2D, textures[type]);
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(m_uniforms[5], 0);
+
+	if(selected)
+	{
+		glUniform4f(m_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f);
+	} else
+	{
+		glUniform4f(m_uniforms[4], 0.0f, 1.0f, 1.0f, 1.0f);
+	}
+}
+
+void Shader::ApplyTexture(int width, int height, unsigned char *data, int type)
+{
+	glGenTextures(1, &textures[type]);
+	glBindTexture(GL_TEXTURE_2D, textures[type]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	
+	//glActiveTexture(GL_TEXTURE0);
+	//glUniform1i(m_uniforms[5], 0);
+
 }
 
 std::string Shader::LoadShader(const std::string& fileName)

@@ -21,7 +21,7 @@ static const glm::vec3 SCALE_FACTOR = glm::vec3(1.0f, 1.0f, 2.0f);
 static const float PI = 3.14159265359f;
 
 static const float epsilon = 0.5f;
-static const float maxDistance = ARRAY_LENGTH * CUBE_SIZE * 2 - 1;
+static const float maxDistance = ARRAY_LENGTH * CUBE_SIZE * 2;
 
 Cube* chain;
 Scene scene;
@@ -32,6 +32,12 @@ double prevX, prevY;
 GLfloat depth[1];
 auto selected = -1;
 auto current = ARRAY_LENGTH - 1;
+
+int cubeWidth, cubeHeight, cubeNumComponents;
+unsigned char *cubeData;
+
+int chainWidth, chainHeight, chainNumComponents;
+unsigned char *chainData;
 
 Vertex vertices[] =
 {
@@ -170,37 +176,29 @@ inline void ccdStep()
 	E.y = -E.y;
 	S.y = -S.y;
 	D.y = -D.y;
-
-	printVector("R", R);
-	printVector("E", E);
-	printVector("D", D);
-	printVector("S", S);
+	
 	
 	if (distance(S, D) > maxDistance)
 	{
 		std::cout << "Error: can't reach!" << std::endl;
 		return;
 	}
+
 	if (distance(E, D) < epsilon)
 	{
-		std::cout << "Done" << std::endl;
+		std::cout << "Done: distance is " << distance(E, D) << std::endl;
 		return;
 	}
 
 	auto RE = normalize(E - R);
 	auto RD = normalize(D - R);
-	printVector("RE", RE);
-	printVector("RD", RD);
 
 	auto theta = degrees(acos(clamp(dot(RE, RD), -1.0f, 1.0f)));
 	theta = theta / 20.0f;
 	auto plane = cross(RE, RD);
 	plane = fixZeroes(plane);
-	printVector("Plane", plane);
 
-	std::cout << "theta = " << theta << std::endl;
 	chain[current].rotate(theta, plane);
-	std::cout << "rotate chain[" << current << "]" << std::endl;
 	if (current == 0)
 	{
 		current = ARRAY_LENGTH;
@@ -219,15 +217,10 @@ inline void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	{
 	case GLFW_KEY_SPACE:
 		ikSolver = !ikSolver;
-		if (!ikSolver)
-		{
-			reset();
-		}
 		break;
-	case GLFW_KEY_F: {
-		ccdStep();
+	case GLFW_KEY_R:
+		reset();
 		break;
-	}
 	case GLFW_KEY_UP:
 		selected == -1 ? scene.rotate(5.0f, 0.0f) : chain[selected].rotate(5.0f, 0.0f);
 		break;
@@ -303,28 +296,30 @@ inline void pick(float xPos, float yPos)
 	}
 }
 
-inline void drawScene(Shader& shader, bool drawAxis)
+inline void drawScene(Shader& shader, bool displayScene)
 {
 	display.Clear(1.0f, 1.0f, 1.0f, 1.0f);
-	shader.Bind();
 
 	if (ikSolver)
 	{
 		ccdStep();
 	}
 
-	M = scene.rotates * chain[ARRAY_LENGTH].translates * chain[ARRAY_LENGTH].rotates * chain[ARRAY_LENGTH].ikRotates;
+	M = chain[ARRAY_LENGTH].translates * scene.rotates * chain[ARRAY_LENGTH].rotates * chain[ARRAY_LENGTH].ikRotates;
 	M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
 	chain[ARRAY_LENGTH].M = M;
 	MVP = P * M;
-	shader.Update(MVP, M, chain[ARRAY_LENGTH].color);
+	shader.Bind();
+	shader.Update(MVP, M, chain[ARRAY_LENGTH].color, 0, selected == ARRAY_LENGTH);
 	mesh.Draw();
+
+
 
 	for (auto i = 0; i < ARRAY_LENGTH; i++)
 	{
 		if (i == 0)
 		{
-			M = scene.rotates * chain[i].translates * chain[i].rotates * chain[i].ikRotates;
+			M = glm::translate(vec3(0, 0, -2)) * chain[i].translates * scene.rotates * chain[i].rotates * chain[i].ikRotates * glm::translate(vec3(0, 0, 2));
 			M = glm::rotate(-90.0f, vec3(1.0f, 0.0f, 0.0f)) * M;
 		}
 		else
@@ -335,10 +330,11 @@ inline void drawScene(Shader& shader, bool drawAxis)
 		M = glm::scale(M, vec3(1.0f, 1.0f, 2.0f));
 		chain[i].M = M;
 		MVP = P * M;
-		shader.Update(MVP, M, chain[i].color);
+		shader.Bind();
+		shader.Update(MVP, M, chain[i].color, 1, selected == i);
 		mesh.Draw();
 
-		if (drawAxis)
+		if (displayScene)
 		{
 			drawLine(vec3(float(AXIS_LENGTH), 0.0f, -1.0f), vec3(-float(AXIS_LENGTH), 0.0f, -1.0f));
 			drawLine(vec3(0.0f, 0.0f, float(AXIS_LENGTH)), vec3(0.0f, 0.0f, -float(AXIS_LENGTH)));
